@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModel, pipeline
 import faiss
 import numpy as np
 import torch
+import asyncio
 from Config_DB import connect_db, store_result, get_results
 
 docs = [
@@ -48,11 +49,22 @@ def generate_answer(query):
 def fetch_results():
     return get_results()
 
-if __name__ == "__main__":
-    query = "How does Ethereum support smart contracts?"
+
+async def fetch_and_store_answer(query):
     answer = generate_answer(query)
-    store_result(query,answer)
 
-    print(fetch_results())
+    await store_result(query, answer)
+    print("Result stored successfully.")
 
+
+async def main():
+    query = "How does Ethereum support smart contracts?"
+
+    await asyncio.gather(fetch_and_store_answer(query))
+
+    results = await fetch_results()
+    print(results)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 

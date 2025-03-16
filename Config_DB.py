@@ -1,34 +1,34 @@
 import psycopg2
-def connect_db():
-    return psycopg2.connect(
+import asyncpg
+import asyncio
+async def connect_db():
+    return await asyncpg.connect(
         host="localhost",
         database="query_results",
         user="postgres",
         password="postgres",
     )
 
-def store_result(query, result):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM queries WHERE query_text = %s", (query,))
-    if cursor.fetchone():
-        print(f"Query '{query}' already exists in the table. Skipping insert.")
-    else:
-        insert_query = "INSERT INTO queries (query_text, result_text) VALUES (%s, %s)"
-        cursor.execute(insert_query, (query, result))
-        conn.commit()
-    cursor.close()
-    conn.close()
+async def store_result(query, result):
+    conn = await connect_db()
+    try:
+        async with conn.transaction():
+            row_exists = await conn.fetch("SELECT 1 FROM queries WHERE query_text = $1", query)
+
+            if(row_exists):
+                print(f"Query '{query}' already exists in the table. Skipping insert.")
+            else:
+                insert_query = "INSERT INTO queries (query_text, result_text) VALUES ($1, $2)"
+                await conn.execute(insert_query, result)
+    finally:
+        await conn.close()
 
 
-def get_results():
-    conn = connect_db()
-    cursor = conn.cursor()
-    select_query = "SELECT * FROM queries"
-    cursor.execute(select_query)
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return rows
+async def get_results():
+    conn = await connect_db()
+    try:
+        select_query = "SELECT * FROM queries"
+        rows = await conn.fetch(select_query)
+        return rows
+    finally:
+        await conn.close()
