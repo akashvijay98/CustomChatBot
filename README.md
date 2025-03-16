@@ -1,3 +1,5 @@
+## Instructions to install and create a Postgres database on ubuntu
+
 # 1. Update package list
 sudo apt update
 
