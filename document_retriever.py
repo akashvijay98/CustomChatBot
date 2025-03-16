@@ -2,7 +2,7 @@ from transformers import AutoTokenizer, AutoModel, pipeline
 import faiss
 import numpy as np
 import torch
-
+from Config_DB import connect_db, store_result, get_results
 
 docs = [
     "Blockchain is a decentralized, distributed ledger technology.",
@@ -15,8 +15,6 @@ docs = [
 model_name = "sentence-transformers/all-MiniLM-L6-v2"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModel.from_pretrained(model_name)
-
-
 
 def encode_sentences(sentences):
     tokens = tokenizer(sentences, padding=True, truncation=True, max_length=512, return_tensors="pt")
@@ -47,7 +45,14 @@ def generate_answer(query):
     return result[0]["generated_text"]
 
 
+def fetch_results():
+    return get_results()
 
 if __name__ == "__main__":
     query = "How does Ethereum support smart contracts?"
-    print(generate_answer(query))
+    answer = generate_answer(query)
+    store_result(query,answer)
+
+    print(fetch_results())
+
+
